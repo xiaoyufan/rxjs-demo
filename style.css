@@ -1,0 +1,17 @@
+html, body {
+  overflow: hidden;
+}
+
+button.is-huge {
+  font-size: 4rem;
+}
+
+header {
+  padding: 0.6rem 0;
+  font-size: 2rem;
+}
+
+section#answer img {
+  cursor: pointer;
+  margin: 1rem;
+}
