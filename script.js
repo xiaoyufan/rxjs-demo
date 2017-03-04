@@ -59,7 +59,7 @@
     ]
   }];
 
-  const SECONDS_OF_ONE_ROUND = 8;
+  const SECONDS_OF_ONE_ROUND = 10;
 
   // selectors
   const startBtn = document.querySelector('#start-button');
@@ -120,7 +120,6 @@
 
   // answer
   const timeout$ = countdown$
-    .map(time => time)
     .filter(time => time === 0)
     .map(() => null);
 
@@ -143,28 +142,32 @@
     })
 
   // game
-  const gameStart$ = Rx.Observable.fromEvent(startBtn, 'click');
-  const nextRound$ = Rx.Observable.fromEvent(nextBtn, 'click');
+  const ROUNDS_NUM = QUESTION_AND_ANSWERS.length;
 
-  const roundStarter$ = Rx.Observable.merge(gameStart$, nextRound$)
-    .scan(acc => acc + 1, 0)
+  const gameStartBtn$ = Rx.Observable.fromEvent(startBtn, 'click');
+  const nextRoundBtn$ = Rx.Observable.fromEvent(nextBtn, 'click').share();
+
+  const roundStarter$ = Rx.Observable.merge(gameStartBtn$, nextRoundBtn$)
+    .take(ROUNDS_NUM)
+    .scan(acc => acc + 1, 0);
+
+  const round$ = roundStarter$
     .do(round => {
       transitPage(pageNodes.game);
       loadQuestionAndAnwsers(round);
-    });
-
-  const round$ = roundStarter$
+    })
     .switchMap(roundResult$)
     .map(roundResult => roundResult === 'correct');
 
+  const gameEnd$ = nextRoundBtn$
+    .skip(ROUNDS_NUM);
+
   const game$ = round$
-    .scan((acc, isCorrect) => acc + isCorrect ? 1 : 0 , 0)
-    .last()
+    .scan((acc, isCorrect) => acc + (isCorrect ? 1 : 0), 0)
+    .combineLatest(gameEnd$)
+    .map(d => d[0])
     .subscribe(totalPoint => {
-      console.log(totalPoint);
-      /*
       transitPage(pageNodes.result);
       loadResult(totalPoint);
-     */
     });
 })();
